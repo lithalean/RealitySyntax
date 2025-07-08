@@ -1,286 +1,228 @@
 # RealitySyntax — AI Context Document
 
-**Date**: July 6, 2025  
-**Status**: Active Development - Phase 2  
-**Purpose**: Context engineering for AI systems working with RealitySyntax codebase
+**Date**: January 2025  
+**Status**: Active Development - TreeSitter Integration Phase  
+**Purpose**: Accurate context for AI systems working with RealitySyntax codebase
 
 ---
 
-## Project Identity
+## 🎯 Project Identity
 
-**RealitySyntax** is the code editor component of Orchard. It is NOT:
-- A standalone IDE application
-- Part of "Reality Game Engine" (old placeholder name)
-- Cross-platform beyond Apple ecosystem
-- A generic text editor
+**RealitySyntax** is a SwiftUI-based multi-language code editor for the Orchard game engine.
 
-**Correct Context**: RealitySyntax is a SwiftUI + TreeSitter multi-language code editor that runs natively on Apple Silicon, designed as the primary code editing interface for Orchard game development projects.
+**Key Facts:**
+- Part of Orchard (not "Reality Game Engine")
+- Apple Silicon exclusive (ARM64 only)
+- Supports Swift, C++, and Metal Shading Language (MSL)
+- Uses TreeSitter for syntax highlighting
+- Cross-platform (macOS and iOS)
 
 ---
 
-## Technical Architecture Deep Dive
+## 🏗️ Current Architecture
 
-### Core Philosophy
-- **Apple Silicon Exclusive**: ARM64 only, no Intel support, no Rosetta
-- **Latest APIs Only**: Uses macOS 26+, iOS 26+, Swift 6, TreeSitter parsing
-- **Multi-Language Native**: Swift, C++, MSL with language-specific optimizations
-- **Cross-Platform**: Single codebase for macOS and iOS with platform adaptations
-
-### File Structure & Key Components
-
+### Directory Structure
 ```
 RealitySyntax/
-├── Models/
-│   ├── ScriptFile.swift          # Script file model with language support
-│   └── ScriptManager.swift       # Central script management & operations
+├── App/                      # App entry point
+├── Core/
+│   └── Managers/
+│       └── ScriptManager.swift    # Central script management
 ├── Editors/
-│   ├── SwiftScriptEditor.swift   # Swift syntax highlighting & editing
-│   ├── CppScriptEditor.swift     # C++ syntax highlighting & editing
-│   └── MSLEditor.swift           # Metal Shading Language (planned)
-├── Views/
-│   ├── MacView.swift             # macOS layout (inspector LEFT, editor RIGHT)
-│   └── iPhoneView.swift          # iOS layout (sliding inspector from LEFT)
-├── Shared/                       # Modular shared components
-│   ├── SharedInspectorView.swift # Generic inspector containers
-│   ├── SharedOutlinerView.swift  # Generic outliner/hierarchy views
-│   └── SharedPropertiesView.swift # Generic properties editing
-└── Syntax/
-    └── SyntaxView.swift          # Main entry point & platform router
+│   ├── SwiftScriptEditor.swift   # Swift editor with TreeSitter integration
+│   └── CppScriptEditor.swift     # C++ editor with TreeSitter integration
+├── Inspector/
+│   ├── InspectorView.swift      # Container for inspector panels
+│   ├── OutlinerView.swift       # Script hierarchy/list
+│   └── PropertiesView.swift     # Script properties display
+├── Sources/
+│   └── Shared/
+│       ├── Components/
+│       │   └── TreeSitterStatusView.swift  # Runtime/language status UI
+│       ├── Extensions/
+│       ├── PlatformColor.swift
+│       └── Types/
+│           └── TreeSitterStatusTypes.swift  # Status enums
+├── Syntax/
+│   ├── ScriptFile.swift         # Script model
+│   └── SyntaxView.swift         # Main entry point
+└── Views/
+    ├── MacView.swift            # macOS layout
+    └── iPhoneView.swift         # iOS layout
 ```
 
-### Key State Management Patterns
+### XCFrameworks (Built with TreeXC)
+```
+├── TreeSitterRuntime.xcframework    # Core TreeSitter runtime
+├── TreeSitterCpp.xcframework       # C++ grammar
+└── TreeSitterSwift.xcframework     # Swift grammar
+```
 
-**ScriptManager** (`@StateObject`):
-- Central source of truth for all script files
-- Manages file operations (create, delete, rename, save)
-- Template system for common script patterns
-- Search and filtering capabilities
-- Statistics tracking and reporting
+---
 
-**ScriptFile** (`@ObservableObject`):
-- Individual script representation with language awareness
-- Content tracking with modification state
-- File statistics (lines, characters, size)
-- Language-specific properties (Swift/C++/MSL)
-- Template-based creation system
+## 🔧 TreeSitter Integration Status
 
-**Language Support Pattern**:
+### Migration Context
+**Before**: Used Objective-C bridging headers to integrate TreeSitter
+**Now**: Attempting pure Swift integration via `dlsym()` dynamic loading
+**Goal**: Modular, optional TreeSitter support without compile-time dependencies
+
+### Current Implementation
+
+#### Runtime Check (WORKING ✅)
 ```swift
-enum ScriptLanguage: String, CaseIterable {
-    case swift = "Swift"
-    case cpp = "C++"
-    case msl = "MSL"
-    
-    var fileExtension: String { ... }
-    var accentColor: Color { ... }
-    var iconName: String { ... }
-    var defaultContent: String { ... }
+// In SwiftScriptEditor.swift
+guard let symbol = dlsym(dlopen(nil, RTLD_LAZY), "ts_parser_new") else {
+    runtimeStatus = .notLoaded
+    return
+}
+// This works - runtime symbols are found
+```
+
+#### Language Check (NOT WORKING ❌)
+```swift
+// In SwiftScriptEditor.swift
+if dlsym(dlopen(nil, RTLD_LAZY), "tree_sitter_swift") != nil {
+    swiftStatus = .loaded  // Never reached - symbol not found
 }
 ```
 
-### Platform Layout Differences
+### The Problem
+Language symbols (`tree_sitter_swift`, `tree_sitter_cpp`) are not visible to `dlsym()` even though:
+1. XCFrameworks are linked in project
+2. Build scripts create proper headers
+3. Runtime symbols work fine
 
-**CRITICAL**: RealitySyntax has OPPOSITE layout from RealityViewport:
-- **RealityViewport**: `[3D Scene] | [Inspector]` (content left, panels right)
-- **RealitySyntax**: `[Inspector] | [Code Editor]` (panels left, content right)
+### Symptoms
+- TreeSitterStatusView shows: Runtime ✅, Swift ❌, C++ ❌
+- Parse test creates parser successfully but can't load languages
+- No crashes, just nil symbol lookups
 
-**macOS Layout**:
-- HSplitView with inspector/outliner on LEFT (280pt width)
-- Code editor takes main area on RIGHT
-- Resizable properties panel with drag gesture
-- Toolbar with inspector toggle and script creation
+---
 
-**iOS Layout**:
-- Full-screen code editor as primary view
-- Inspector slides from LEFT edge (opposite of RealityViewport)
-- Bottom toolbar with material background
-- Touch-optimized compact headers and controls
+## 🎨 UI/UX Architecture
 
-### Editor Integration Patterns
+### Layout Philosophy
+**RealitySyntax uses traditional code editor layout:**
+- Inspector/File tree on LEFT
+- Code content on RIGHT
+- (This is opposite of RealityViewport which has 3D content left, panels right)
 
-**Language-Specific Editors**:
-- `SwiftScriptEditor`: Orange theming, Swift-specific features
-- `CppScriptEditor`: Blue theming, C++ build integration
-- `MSLEditor`: Purple theming, Metal shader features (planned)
+### Platform Adaptations
 
-**TreeSitter Integration**:
-- Runtime status tracking with visual indicators
-- Language grammar loading for syntax highlighting
-- Parse testing and debugging capabilities
-- Placeholder bindings for actual TreeSitter implementation
-
-**Adaptive Layouts**:
-- Environment detection via `@Environment(\.horizontalSizeClass)`
-- Compact vs regular size class adaptations
-- Platform-specific font sizes and spacing
-- Touch vs cursor interaction optimizations
-
-### Code Editor Architecture
-
-**Language Switching Pattern**:
-```swift
-switch script.language {
-case .swift:
-    SwiftScriptEditor()
-case .cpp:
-    CppScriptEditor()
-case .msl:
-    MSLEditorPlaceholder()
-}
-```
-
-**Editor Features**:
+#### macOS
+- HSplitView with 280pt left panel
+- Full editor header with TreeSitter status
+- Debug panel overlay option
 - Line numbers with alternating backgrounds
-- Adaptive header (compact vs full)
+
+#### iOS
+- Full-screen editor
+- Sliding inspector from LEFT edge
+- Compact header
+- Bottom toolbar with material background
+
+### Editor Features
+- Language-specific theming (Swift=orange, C++=blue, MSL=purple)
+- Line numbers toggle
 - TreeSitter status indicators
-- Debug panels for parser testing
-- Platform-appropriate action buttons
-
-**Content Synchronization**:
-- Scripts store content as `@Published var content: String`
-- Real-time modification tracking with `isModified` state
-- Automatic statistics calculation (lines, characters, file size)
-- Template-based content initialization
+- Debug panel for parser testing
+- Template-based file creation
 
 ---
 
-## Current Development Status
+## 💻 Key Components
 
-### Working Features
-- ✅ Multi-language script management (Swift, C++, MSL templates)
-- ✅ Cross-platform adaptive layouts (Mac split view, iOS overlay)
-- ✅ Script file operations (create, delete, rename, duplicate)
-- ✅ Properties inspection with live statistics
-- ✅ TreeSitter integration foundation
-- ✅ Template system for common patterns
-- ✅ Modular shared component architecture
+### ScriptManager
+- Central state object (`@StateObject`)
+- Manages all script files
+- Template system for new files
+- Search/filter functionality
 
-### Known Issues
-- TreeSitter language grammars not yet fully integrated
-- MSL editor is placeholder only
-- Save/load operations need file system integration
-- Build system integration not implemented
-- Code completion and IntelliSense not available
+### ScriptFile
+- Individual script model (`@ObservableObject`)
+- Language property (Swift/C++/MSL)
+- Content and modification tracking
+- Statistics (lines, size, etc.)
 
-### Phase 2 Goals (Current)
-- Complete TreeSitter language grammar integration
-- Implement file system persistence
-- Add build and run capabilities for Swift/C++
-- Enhanced syntax highlighting and validation
-- Code completion system foundation
+### Language Editors
+Each editor (SwiftScriptEditor, CppScriptEditor) includes:
+- Language-specific syntax highlighting (when TreeSitter works)
+- Debug panel for TreeSitter status
+- Platform-adaptive layout
+- Parse testing functionality
 
----
-
-## Development Guidelines for AI
-
-### Code Patterns to Follow
-- Use `ScriptLanguage` enum for all language-specific logic
-- Leverage shared components from `Shared/` directory
-- Platform-specific code with `#if os(macOS)` / `#if os(iOS)`
-- Template-based script creation via `ScriptManager`
-- Consistent naming: no "Unified" or "Syntax" prefixes
-
-### Code Patterns to Avoid
-- Hard-coded file paths or content
-- Platform-specific UI frameworks (use SwiftUI equivalents)
-- Direct file system access without ScriptManager
-- Inline script content (use template system)
-- Language-specific hardcoding outside ScriptLanguage enum
-
-### Common Tasks
-**Adding New Languages**: Extend `ScriptLanguage` enum, create new editor view
-**Adding Script Templates**: Use `ScriptFile.create*()` static methods
-**Platform Adaptations**: Use size class detection and platform guards
-**TreeSitter Integration**: Extend parser status tracking in editors
-**Shared Components**: Use generic protocols (OutlinerItem, PropertyEditable)
-
-### Architecture Decisions Context
-- **Why Multi-Language?**: Game development requires Swift (logic), C++ (performance), MSL (shaders)
-- **Why TreeSitter?**: Modern syntax highlighting with grammar-based parsing
-- **Why Opposite Layout?**: Code editors typically show file tree on left, content on right
-- **Why Template System?**: Reduces boilerplate for common game programming patterns
-- **Why Modular Shared Components?**: Consistency with RealityViewport and reusability
+### TreeSitterStatusView
+- Shows runtime load status
+- Shows language grammar status
+- Visual indicators (checkmark/xmark)
+- Help tooltips
 
 ---
 
-## Integration Context
+## 🚧 Current Development Focus
 
-RealitySyntax integrates with Orchard as:
-- **Primary Code Editor**: All game logic, performance code, and shader development
-- **Script Management**: Organization and file operations for project scripts
-- **Build Integration**: Compilation and testing workflows
-- **Template System**: Rapid prototyping with game development patterns
+### Immediate Goal
+Fix TreeSitter language symbol visibility so `dlsym()` can find:
+- `tree_sitter_swift` from TreeSitterSwift.xcframework
+- `tree_sitter_cpp` from TreeSitterCpp.xcframework
 
-**Related Orchard Systems** (external to RealitySyntax):
-- **RealityViewport**: 3D scene editor (uses opposite layout direction)
-- **Build System**: Compilation and deployment pipeline
-- **Asset Pipeline**: Resource import and processing
-- **Project Management**: Workspace and project organization
-- **Version Control**: Git integration and collaboration
+### Possible Solutions Being Explored
+1. Symbol visibility in XCFramework builds
+2. Different linking flags in Xcode
+3. Manual symbol registration
+4. Alternative to `dlopen(nil, RTLD_LAZY)`
 
----
-
-## Multi-Language Development Context
-
-### Swift in Orchard
-- **Purpose**: Primary game logic, UI systems, scripting
-- **Integration**: Godot-Swift bindings for native performance
-- **Features**: Export properties, node inheritance, type safety
-- **Templates**: Player controllers, game managers, UI components
-
-### C++ in Orchard
-- **Purpose**: Performance-critical code, engine extensions
-- **Integration**: Godot-CPP for native module development
-- **Features**: Direct memory management, system-level access
-- **Templates**: Physics controllers, audio processors, platform bridges
-
-### MSL in Orchard
-- **Purpose**: Custom shaders, visual effects, compute kernels
-- **Integration**: Metal 3 rendering pipeline integration
-- **Features**: Apple GPU optimization, live preview
-- **Templates**: Vertex shaders, fragment shaders, compute shaders
+### What Success Looks Like
+- TreeSitterStatusView shows all green checkmarks
+- Syntax highlighting works for Swift and C++ code
+- Parse tests can use actual language grammars
+- No Objective-C bridging headers needed
 
 ---
 
-## AI Assistant Guidelines
+## 🛠️ Development Guidelines
 
-When working with this codebase:
-1. **Always consider language differences** (Swift vs C++ vs MSL patterns)
-2. **Respect the layout direction** (inspector left, editor right)
-3. **Use the template system** for new script creation
-4. **Follow the modular architecture** with shared components
-5. **Maintain cross-platform compatibility** (macOS and iOS)
-6. **Use proper TreeSitter integration** patterns for syntax features
-7. **Keep the Apple Silicon exclusive** philosophy
-8. **Reference ScriptLanguage enum** for all language-specific logic
+### Code Patterns
+- Use `dlsym()` for all TreeSitter integration
+- Check symbol availability before use
+- Graceful fallback when TreeSitter unavailable
+- Status tracking through dedicated types
 
-The goal is a professional, multi-language development environment that seamlessly integrates with the Orchard game engine ecosystem while providing native Apple platform experiences.
+### Adding New Languages
+1. Build XCFramework with TreeXC
+2. Link in Xcode project
+3. Add symbol check in editor
+4. Update status types
+
+### Testing TreeSitter
+1. Check TreeSitterStatusView indicators
+2. Use debug panel in editors
+3. Run parse test with play button
+4. Check console for symbol lookup results
 
 ---
 
+## 📝 Known Issues
 
+1. **Language symbols not found** - Main blocker
+2. **MSL editor** - Placeholder only
+3. **Save/Load** - Not implemented
+4. **Build integration** - Not connected
+5. **Syntax highlighting** - Waiting on TreeSitter
 
 ---
 
-## 🔧 July 2025 — TreeSitter Architecture Modernization
+## 🔍 Debugging Information
 
-RealitySyntax now uses a modular, runtime-optional Tree-sitter integration:
+To verify the current state:
+1. Run app and check TreeSitterStatusView
+2. Open debug panel in any editor
+3. Click parse test button
+4. Check Xcode console for dlsym results
 
-- ✅ `TreeSitterRuntime`, `TreeSitterSwift`, and `TreeSitterCpp` are optional XCFrameworks
-- ✅ No bridging headers (`.h`) or `.m` files — replaced with `dlsym()` dynamic lookup
-- ✅ Status indicators reflect true runtime and grammar presence
-- ✅ Editors fail gracefully when runtime or grammar is not loaded
-- ✅ `TreeSitterStatusView` is the new UI source of truth for integration state
+The runtime should show as loaded, but languages will show as not loaded.
 
-### Example Runtime Check
+---
 
-```swift
-if let symbol = dlsym(dlopen(nil, RTLD_LAZY), "ts_parser_new") {
-    runtimeStatus = .loaded
-}
-```
-
-These changes improve portability, sandbox compliance, and remove the need for Objective-C shims.
-
-
-*Updated July 7, 2025 — RealitySyntax Context v1.1*
+*This document reflects the actual current state as of January 2025*

@@ -1,189 +1,178 @@
 # 📝 RealitySyntax
 
-*Multi-Language Code Editor for Apple Silicon*
+*Native Multi-Language Code Editor for Apple Game Development*
 
-![Platform](https://img.shields.io/badge/platform-macOS%2026%2B-blue)
-![Architecture](https://img.shields.io/badge/arch-ARM64%20ONLY-green)
-![Swift Version](https://img.shields.io/badge/swift-6.0%2B-orange)
-![Xcode](https://img.shields.io/badge/Xcode-26%2B-red)
+![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20iOS-blue)
+![Architecture](https://img.shields.io/badge/arch-Apple%20Silicon-green)
+![Swift Version](https://img.shields.io/badge/swift-6.0-orange)
+![Status](https://img.shields.io/badge/status-In%20Development-yellow)
 
-**RealitySyntax** is the code editor component of Orchard—a powerful multi-language development environment built exclusively for Apple Silicon and the latest Apple technologies.
-
----
-
-## ✨ Features
-
-- **Multi-Language Support**: Swift, C++, and Metal Shading Language (MSL)
-- **Apple Silicon Optimized**: Built exclusively for M1/M2/M3/M4 processors
-- **Cross-Platform**: Native experiences on macOS and iOS
-- **TreeSitter Integration**: Advanced syntax highlighting and parsing
-- **Live Code Analysis**: Real-time error detection and suggestions
-- **Adaptive UI**: Responsive layouts for different screen sizes
-
-## 🎯 Language Support
-
-### Swift
-- Full Swift 6 syntax highlighting
-- Godot-Swift integration
-- Live parsing and validation
-- Export property detection
-
-### C++
-- Modern C++ syntax support
-- Godot-CPP bindings
-- Build system integration
-- Header/implementation awareness
-
-### Metal Shading Language (MSL)
-- Metal 3 shader support
-- Live preview capabilities
-- Vertex/fragment shader templates
-- Apple GPU optimizations
+**RealitySyntax** is a modern code editor built exclusively for Apple platforms, designed as the primary code editing interface for the Orchard game engine. It provides native SwiftUI experiences on both macOS and iOS with advanced syntax highlighting powered by Tree-sitter.
 
 ---
 
-## 🏗️ Architecture
+## ✨ Key Features
 
-```
-RealitySyntax/
-├── Models/                    # Core data models
-│   ├── ScriptFile.swift      # Script file representation
-│   └── ScriptManager.swift   # Script management & operations
-├── Editors/                  # Language-specific editors
-│   ├── SwiftScriptEditor.swift
-│   ├── CppScriptEditor.swift
-│   └── MSLEditor.swift       # Coming soon
-├── Views/                    # Platform-adaptive layouts
-│   ├── MacView.swift         # macOS split-view interface
-│   └── iPhoneView.swift      # iOS overlay interface
-└── Shared/                   # Reusable components
-    ├── SharedInspectorView.swift
-    ├── SharedOutlinerView.swift
-    └── SharedPropertiesView.swift
+### 🚀 Native Apple Experience
+- Built with **SwiftUI** for seamless macOS and iOS support
+- Optimized for **Apple Silicon** (M1/M2/M3/M4)
+- Adaptive layouts that feel at home on any device
+- Native performance with no Electron or web views
+
+### 🎨 Multi-Language Support
+- **Swift** - Primary game logic with Godot-Swift bindings
+- **C++** - Performance-critical code and engine extensions  
+- **Metal Shading Language** - Custom shaders and visual effects
+- Language-specific syntax themes and templates
+
+### 🔧 Modern Architecture
+- **Tree-sitter** integration for accurate syntax highlighting
+- Dynamic framework loading - grammars are optional
+- No Objective-C dependencies - pure Swift implementation
+- Modular design for easy extension
+
+---
+
+## 📱 Platform Experiences
+
+### macOS
+<img width="800" alt="macOS Editor Layout" src="https://github.com/user-attachments/assets/placeholder-macos">
+
+- Traditional code editor layout with file tree on left
+- Resizable panels and customizable workspace
+- Full keyboard shortcuts and productivity features
+- Integrated debugging and build tools
+
+### iOS
+<img width="400" alt="iOS Editor Layout" src="https://github.com/user-attachments/assets/placeholder-ios">
+
+- Full-screen editing with slide-out inspector
+- Touch-optimized text selection and navigation
+- Floating toolbar for quick actions
+- External keyboard support
+
+---
+
+## 🏗️ Technical Architecture
+
+### Tree-sitter Integration
+RealitySyntax uses a modern approach to syntax highlighting:
+
+```swift
+// Runtime detection of Tree-sitter availability
+if dlsym(dlopen(nil, RTLD_LAZY), "tree_sitter_swift") != nil {
+    // Enable syntax highlighting
+    swiftStatus = .loaded
+}
 ```
 
-**Key Components:**
-- **Script Manager**: File operations, templates, and project management
-- **Adaptive Editors**: Platform-optimized editing experiences
-- **Inspector System**: Live properties and statistics
-- **Outliner**: Hierarchical script organization
+- **No compile-time dependencies** - Tree-sitter is completely optional
+- **Dynamic loading** - Grammar frameworks loaded at runtime
+- **Graceful fallback** - Editor works without syntax highlighting
+- **Visual indicators** - Shows which languages are available
+
+### Component Structure
+```
+├── Editors/          # Language-specific editors
+├── Inspector/        # File browser and properties
+├── Core/            # Script management
+└── Views/           # Platform-adaptive layouts
+```
+
+---
+
+## 🎯 Part of Orchard
+
+RealitySyntax is one component of the **Orchard** game engine - a complete Apple-native game development ecosystem:
+
+- **RealitySyntax** - Code editing (this project)
+- **RealityViewport** - 3D scene manipulation
+- **RealityAssets** - Resource management
+- **RealityBuild** - Compilation and deployment
 
 ---
 
 ## 🚧 Development Status
 
-### ✅ Phase 1: Foundation (Complete)
-- Multi-language editor framework
-- Cross-platform adaptive layouts
-- Script file management system
-- TreeSitter integration foundation
+### Currently Working
+- ✅ Multi-file script management
+- ✅ Platform-adaptive UI (macOS/iOS)
+- ✅ Tree-sitter runtime integration
+- ✅ Language-specific editor views
+- ✅ Real-time status indicators
 
-### 🚀 Phase 2: Core Features (In Progress)
-- Swift and C++ syntax highlighting
-- Live code analysis and validation
-- Template system for common patterns
-- Build and run integration
+### In Progress
+- 🔄 Tree-sitter grammar loading
+- 🔄 Syntax highlighting implementation
+- 🔄 Build system integration
+- 🔄 File persistence
 
-### 🔮 Phase 3: Advanced Features (Planned)
-- MSL editor with live preview
-- Advanced debugging integration
-- Code completion and IntelliSense
-- Git integration and version control
-
----
-
-## 💻 Getting Started
-
-### Basic Usage
-- **Create Scripts**: Use the + button to create new scripts
-- **Switch Languages**: Choose from Swift, C++, or MSL templates
-- **Live Editing**: Real-time syntax highlighting and validation
-- **Organize**: Use the outliner to manage multiple scripts
-- **Properties**: View script statistics and metadata
+### Planned Features
+- 📋 Code completion and IntelliSense
+- 📋 Integrated debugging
+- 📋 Git version control
+- 📋 Live error detection
 
 ---
 
-## 🎮 Controls
+## 🛠️ Building from Source
 
-### macOS
-- **Left Panel**: Script outliner and properties inspector
-- **Right Panel**: Main code editing area
-- **Toolbar**: Script creation and view controls
-- **Shortcuts**: Standard Mac text editing conventions
+*Note: Source code is currently in a private repository during initial development.*
 
-### iOS
-- **Sliding Inspector**: Swipe from left edge to access outliner
-- **Touch Editing**: Optimized text selection and editing
-- **Toolbar**: Bottom navigation with script controls
-- **Gestures**: Intuitive touch-based interactions
+### Requirements
+- macOS 15.0+ or iOS 18.0+
+- Xcode 16.0+
+- Swift 6.0
+- Apple Silicon Mac (for development)
 
----
+### Tree-sitter Frameworks
+RealitySyntax uses custom-built XCFrameworks for Tree-sitter support:
+- `TreeSitterRuntime.xcframework` - Core parsing engine
+- `TreeSitterSwift.xcframework` - Swift grammar
+- `TreeSitterCpp.xcframework` - C++ grammar
 
-## 🔧 Part of Orchard
-
-RealitySyntax is the code editing component of **Orchard**—a complete Apple-native game development ecosystem.
-
-**Related Components:**
-- **RealityViewport**: 3D scene editor and manipulation
+These are built using the **TreeXC** build system (separate project).
 
 ---
 
-## 🎨 Language-Specific Features
+## 📚 Documentation
 
-### Swift Development
-- **Export Properties**: Automatic detection of `@Export` variables
-- **Live Validation**: Real-time syntax and type checking
-- **Smart Templates**: Common game programming patterns
-
-### C++ Development
-- **Header Management**: Automatic include detection
-- **Godot-CPP Bindings**: Full GDNative integration
-- **Build Integration**: Seamless compilation workflow
-- **Memory Management**: Smart pointer and RAII patterns
-
-### Metal Shaders (Coming Soon)
-- **Vertex/Fragment**: Complete shader pipeline support
-- **Live Preview**: Real-time rendering feedback
-- **Apple GPU**: M-series optimization hints
-- **Material Integration**: Direct connection to rendering system
+Detailed documentation is being developed alongside the project:
+- **Architecture Guide** - Understanding the codebase
+- **Language Integration** - Adding new language support
+- **Platform Adaptation** - iOS vs macOS differences
+- **Tree-sitter Guide** - Grammar integration
 
 ---
 
-## 📋 Requirements
+## 🤝 Contributing
 
-| Component | Version |
-|-----------|---------|
-| macOS     |   26+   |
-| iOS       |   26+   |
-| Xcode     |   26+   |
-| Swift     |   6.0+  |
-
+While the repository is currently private, we welcome feedback and suggestions! Feel free to open issues for:
+- Feature requests
+- Bug reports (once public beta begins)
+- Documentation improvements
+- Language support requests
 
 ---
 
-## ✅ Runtime Architecture Updates (2025-07)
+## 📄 License
 
-- Tree-sitter runtime and grammar modules are now loaded via `dlsym()` at runtime
-- Removed all use of Objective-C bridging headers (`RealitySyntax-Bridging-Header.h`) and `.m` files
-- `TreeSitterRuntime.xcframework`, `TreeSitterCpp.xcframework`, and `TreeSitterSwift.xcframework` are now optional
-- Graceful fallback behavior if runtime or grammar modules are not present
-- `TreeSitterStatusView` shows real-time runtime and language availability
-
-### Example Usage
-
-```swift
-if dlsym(dlopen(nil, RTLD_LAZY), "tree_sitter_cpp") != nil {
-    cppStatus = .loaded
-} else {
-    cppStatus = .notLoaded
-}
-```
-
-These changes make the editor modular and sandbox-safe for dynamic Tree-sitter grammar loading.
+RealitySyntax will be released under an open-source license (TBD) once it reaches public beta status.
 
 ---
 
-*Built with ❤️ for the Apple ecosystem as part of the Orchard game engine*
+## 🙏 Acknowledgments
+
+- [Tree-sitter](https://tree-sitter.github.io/tree-sitter/) for parsing technology
+- [Swift Forums](https://forums.swift.org) community for SwiftUI guidance
+- Apple Developer Documentation for platform APIs
 
 ---
 
+<p align="center">
+  <i>Built with ❤️ for the Apple ecosystem as part of the Orchard game engine</i>
+</p>
+
+<p align="center">
+  <a href="#-realitysyntax">Back to top ↑</a>
+</p>
