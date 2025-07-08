@@ -258,4 +258,29 @@ The goal is a professional, multi-language development environment that seamless
 
 ---
 
-*Updated July 6, 2025 — RealitySyntax Context v1.0*
+
+
+---
+
+## 🔧 July 2025 — TreeSitter Architecture Modernization
+
+RealitySyntax now uses a modular, runtime-optional Tree-sitter integration:
+
+- ✅ `TreeSitterRuntime`, `TreeSitterSwift`, and `TreeSitterCpp` are optional XCFrameworks
+- ✅ No bridging headers (`.h`) or `.m` files — replaced with `dlsym()` dynamic lookup
+- ✅ Status indicators reflect true runtime and grammar presence
+- ✅ Editors fail gracefully when runtime or grammar is not loaded
+- ✅ `TreeSitterStatusView` is the new UI source of truth for integration state
+
+### Example Runtime Check
+
+```swift
+if let symbol = dlsym(dlopen(nil, RTLD_LAZY), "ts_parser_new") {
+    runtimeStatus = .loaded
+}
+```
+
+These changes improve portability, sandbox compliance, and remove the need for Objective-C shims.
+
+
+*Updated July 7, 2025 — RealitySyntax Context v1.1*

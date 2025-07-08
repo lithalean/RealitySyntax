@@ -94,18 +94,6 @@ RealitySyntax/
 
 ## 💻 Getting Started
 
-### Prerequisites
-- Mac with Apple Silicon (M1 minimum)
-- macOS 26 Developer Beta or later
-- Xcode 26 Developer Beta or later
-- Active Apple Developer account
-
-### Quick Start
-1. Clone the repository
-2. Open `RealitySyntax.xcodeproj` in Xcode 26+
-3. Select your target device (Mac or iPhone)
-4. Build and run
-
 ### Basic Usage
 - **Create Scripts**: Use the + button to create new scripts
 - **Switch Languages**: Choose from Swift, C++, or MSL templates
@@ -137,9 +125,6 @@ RealitySyntax is the code editing component of **Orchard**—a complete Apple-na
 
 **Related Components:**
 - **RealityViewport**: 3D scene editor and manipulation
-- **Asset Pipeline**: Import and processing tools
-- **Build System**: Compilation and deployment
-- **Project Management**: Workspace organization
 
 ---
 
@@ -147,7 +132,6 @@ RealitySyntax is the code editing component of **Orchard**—a complete Apple-na
 
 ### Swift Development
 - **Export Properties**: Automatic detection of `@Export` variables
-- **Node Inheritance**: Godot-Swift class hierarchy support
 - **Live Validation**: Real-time syntax and type checking
 - **Smart Templates**: Common game programming patterns
 
@@ -169,29 +153,37 @@ RealitySyntax is the code editing component of **Orchard**—a complete Apple-na
 
 | Component | Version |
 |-----------|---------|
-| macOS | 26+ |
-| iOS | 26+ |
-| Xcode | 26+ |
-| Swift | 6.0+ |
-| Hardware | Apple Silicon only |
+| macOS     |   26+   |
+| iOS       |   26+   |
+| Xcode     |   26+   |
+| Swift     |   6.0+  |
+
 
 ---
 
-## 🤝 Contributing
+## ✅ Runtime Architecture Updates (2025-07)
 
-This project uses cutting-edge Apple technologies. Contributions should:
-- Use Swift 6 concurrency features
-- Follow Apple's latest design patterns
-- Maintain Apple Silicon optimization
-- Support both macOS and iOS platforms
-- Include TreeSitter language grammar updates
+- Tree-sitter runtime and grammar modules are now loaded via `dlsym()` at runtime
+- Removed all use of Objective-C bridging headers (`RealitySyntax-Bridging-Header.h`) and `.m` files
+- `TreeSitterRuntime.xcframework`, `TreeSitterCpp.xcframework`, and `TreeSitterSwift.xcframework` are now optional
+- Graceful fallback behavior if runtime or grammar modules are not present
+- `TreeSitterStatusView` shows real-time runtime and language availability
 
----
+### Example Usage
 
-## 📄 License
+```swift
+if dlsym(dlopen(nil, RTLD_LAZY), "tree_sitter_cpp") != nil {
+    cppStatus = .loaded
+} else {
+    cppStatus = .notLoaded
+}
+```
 
-[Add your license information here]
+These changes make the editor modular and sandbox-safe for dynamic Tree-sitter grammar loading.
 
 ---
 
 *Built with ❤️ for the Apple ecosystem as part of the Orchard game engine*
+
+---
+
